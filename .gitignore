@@ -34,3 +34,6 @@ dist
 # nextjs
 docs/.next
 !docs/lib
+
+package-lock.json
+yarn.lock
