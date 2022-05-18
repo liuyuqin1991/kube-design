@@ -1,37 +1,54 @@
 import React from 'react';
 import { TriangleRight, TriangleDown } from '@kubed/icons';
-import { FlatNode } from './types';
+import { isFunction as _isFunction } from 'lodash';
+import { FlatDataNode, CustomIcon } from './types';
 import { DefaultProps } from '../theme';
-import { TreeNodeBox, IconBox, ConnectLine, TitleBox, FillingLineBox } from './Tree.styles';
+import { TreeNodeBox, IconBox, ConnectLine, TreeNodeTitleBox, FillingLineBox } from './Tree.styles';
 import forwardRef from '../utils/forwardRef';
 
 export interface TreeProps extends DefaultProps {
-  nodeData?: FlatNode;
-  showLine?: boolean;
-  onToggle?: (fn: FlatNode) => void;
+  nodeData?: FlatDataNode;
+  isShowLine?: boolean;
+  onToggle: (fn: FlatDataNode) => void;
+  onCheck: (fn: FlatDataNode) => void;
+  customIcon?: () => CustomIcon;
+  checked: boolean;
 }
 
 const TreeNode = forwardRef<TreeProps, 'div'>(
-  ({ className, nodeData, showLine, onToggle, ...others }, ref) => {
-    const { title, cKeys, isExpand } = nodeData;
+  (
+    { className, nodeData, isShowLine = true, checked, onToggle, onCheck, customIcon, ...others },
+    ref
+  ) => {
+    const { title, cKeys, isExpand, level, isLast, isLasts } = nodeData;
 
     const toggleNode = () => {
       onToggle(nodeData);
     };
 
+    const checkNode = () => {
+      onCheck(nodeData);
+    };
+
     const renderIcon = () => {
-      // 有子节点，显示icon
-      if (isExpand) {
-        return <TriangleDown size={14} />;
+      if (_isFunction(customIcon)) {
+        const iconNodes = customIcon();
+        return isExpand ? iconNodes.open : iconNodes.close;
       }
-      return <TriangleRight size={14} />;
+      return isExpand ? <TriangleDown size={14} /> : <TriangleRight size={14} />;
     };
 
     return (
       <TreeNodeBox {...others} ref={ref}>
-        {showLine ? <ConnectLine {...nodeData} /> : <FillingLineBox {...nodeData} />}
+        {isShowLine ? (
+          <ConnectLine level={level} isLast={isLast} isLasts={isLasts} />
+        ) : (
+          <FillingLineBox level={level} />
+        )}
         {cKeys.length > 0 && <IconBox onClick={toggleNode}>{renderIcon()}</IconBox>}
-        <TitleBox cKeys={cKeys}>{title}</TitleBox>
+        <TreeNodeTitleBox cKeys={cKeys} checked={checked} onClick={checkNode}>
+          {title}
+        </TreeNodeTitleBox>
       </TreeNodeBox>
     );
   }

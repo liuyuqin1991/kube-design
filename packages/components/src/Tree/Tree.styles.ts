@@ -1,20 +1,20 @@
 import styled, { css } from 'styled-components';
 import { reverse as _reverse, forEach as _forEach } from 'lodash';
-import { FlatNode } from './types';
 
 interface TreeNodeStyle {
   level?: number;
-  showLine?: boolean;
+  isShowLine?: boolean;
   isLast?: boolean;
   isLasts?: boolean[];
   isExpand?: boolean;
-  cKeys?: FlatNode[]; //子节点树
+  cKeys?: string[]; //子节点树
+  checked?: boolean;
 }
 
 const IconBox = styled.div<TreeNodeStyle>`
   display: flex;
   align-items: center;
-  padding: 0 8px;
+  padding-left: 8px;
   cursor: pointer;
 `;
 
@@ -107,16 +107,16 @@ const FillingLineBox = styled.div<TreeNodeStyle>`
   height: 32px;
 `;
 
-const TitleBox = styled.div<TreeNodeStyle>`
+const TreeNodeTitleBox = styled.div<TreeNodeStyle>`
+  min-width: 150px;
   height: 32px;
+  padding: 0 8px;
   display: flex;
   align-items: center;
-  ${({ cKeys }) =>
-    cKeys.length > 0
-      ? css``
-      : css`
-          padding: 0 8px;
-        `};
+  color: ${({ theme }) => theme.palette.accents_8};
+  background-color: ${({ theme, checked }) =>
+    checked ? theme.palette.accents_1 : theme.palette.background};
+  cursor: pointer;
 `;
 
 const TreeBox = styled.ul`
@@ -133,7 +133,7 @@ const TreeNodeBox = styled.li`
   align-items: center;
 `;
 
-const TreeTitle = styled.li`
+const TreeTitle = styled.li<TreeNodeStyle>`
   padding: 6px 0;
   margin: 0;
   font-size: 14px;
@@ -141,4 +141,4 @@ const TreeTitle = styled.li`
   color: ${({ theme }) => theme.palette.accents_8};
 `;
 
-export { TreeBox, TreeTitle, IconBox, TitleBox, FillingLineBox, TreeNodeBox, ConnectLine };
+export { TreeBox, TreeTitle, IconBox, TreeNodeTitleBox, FillingLineBox, TreeNodeBox, ConnectLine };
