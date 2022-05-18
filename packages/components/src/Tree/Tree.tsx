@@ -1,16 +1,16 @@
+/* eslint-disable no-param-reassign */
 import React, { useState } from 'react';
-import {
-  map as _map,
-  filter as _filter,
-  findIndex as _findIndex,
-  forEach as _forEach,
-  includes as _includes,
-} from 'lodash';
+import { map as _map, forEach as _forEach, includes as _includes } from 'lodash';
 import { DefaultProps } from '../theme';
 import forwardRef from '../utils/forwardRef';
 import TreeNode from './TreeNode';
 import { FlatDataNode, TreeDataNode, CustomIcon } from './types';
-import { processingFlatData, processingTreeData, deleteAllChildrenByNode } from './util';
+import {
+  processingFlatData,
+  processingTreeData,
+  changeChildrenShowByNode,
+  changeAllChildrenHiddenByNode,
+} from './util';
 import { TreeBox, TreeTitle } from './Tree.styles';
 
 export interface TreeProps extends DefaultProps {
@@ -73,64 +73,50 @@ export const Tree = forwardRef<TreeProps, 'div'>((props: TreeProps, ref) => {
     ...others
   } = props;
   // 完整的树数据
-  const initFullData = () => {
+  const initTree = () => {
+    let resTree = [];
+    // 预处理数据
     if (flatData) {
-      return processingFlatData(flatData);
+      resTree = processingFlatData(flatData);
     }
     if (treeData) {
-      return processingTreeData(treeData);
+      resTree = processingTreeData(treeData);
     }
-    return [];
-  };
-  const [fullData] = useState<FlatDataNode[]>(initFullData());
-  // 显示的树数据
-  const initDisplayData = () => {
+    // 根据props参数设置显隐展缩
     if (isExpandAll) {
-      return _map(fullData, (fn: FlatDataNode) => {
-        return {
-          isExpand: fn.cKeys.length > 0,
-          ...fn,
-        };
+      _forEach(resTree, (n: FlatDataNode) => {
+        n.isShow = true;
+        if (n.cKeys.length > 0) {
+          n.isExpand = true;
+        }
+      });
+    } else {
+      _forEach(resTree, (n: FlatDataNode) => {
+        if (n.level <= expandLevel) {
+          n.isShow = true;
+          if (n.level < expandLevel && n.cKeys.length > 0) {
+            n.isExpand = true;
+          }
+        }
       });
     }
-    return _map(
-      _filter(fullData, (f: FlatDataNode) => f.level <= expandLevel),
-      (fn: FlatDataNode) => {
-        return {
-          isExpand: fn.level < expandLevel && fn.cKeys.length > 0,
-          ...fn,
-        };
-      }
-    );
+    return resTree;
   };
-  const [displayData, setDisplayData] = useState<FlatDataNode[]>(() => initDisplayData());
+  const [tree, setTree] = useState<FlatDataNode[]>(initTree());
   const [selected, setSelected] = useState<string[]>([]);
 
-  const toggleNode = (fn: FlatDataNode) => {
-    const resTree = [].concat(displayData);
-    const index = _findIndex(displayData, (item) => item.key === fn.key);
+  const toggleNode = (n: FlatDataNode) => {
     // 收紧
-    if (fn.isExpand) {
-      deleteAllChildrenByNode(displayData, resTree, fn);
+    if (n.isExpand) {
+      setTree(changeAllChildrenHiddenByNode(tree, n));
     }
     // 展开
     else {
-      const addNode = [];
-      _forEach(fullData, (f: FlatDataNode) => {
-        if (f.pKey === fn.key) {
-          addNode.push({
-            isExpand: false,
-            ...f,
-          });
-        }
-      });
-      resTree.splice(index + 1, 0, ...addNode);
+      setTree(changeChildrenShowByNode(tree, n));
     }
-    resTree[index].isExpand = !resTree[index].isExpand;
-    setDisplayData(resTree);
   };
 
-  const checkNode = (f: FlatDataNode) => {
+  const pickNode = (f: FlatDataNode) => {
     // 单选
     if (!isMultiple && f.key !== selected[0]) {
       setSelected([f.key]);
@@ -141,14 +127,15 @@ export const Tree = forwardRef<TreeProps, 'div'>((props: TreeProps, ref) => {
   return (
     <TreeBox {...others} ref={ref}>
       {treeTitle && <TreeTitle>{treeTitle}</TreeTitle>}
-      {_map(displayData, (t: FlatDataNode) => {
+      {_map(tree, (t: FlatDataNode) => {
         return (
           <TreeNode
+            key={t.key}
             nodeData={t}
             {...others}
             onToggle={toggleNode}
-            onCheck={checkNode}
-            checked={_includes(selected, t.key)}
+            onPick={pickNode}
+            selected={_includes(selected, t.key)}
           />
         );
       })}

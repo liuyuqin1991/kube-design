@@ -11,8 +11,8 @@ type FlatDataNode = {
   isLast?: boolean; //是否为最后的兄弟节点
   pKeys?: string[]; //父节点冒泡树keys，一直冒泡到顶层
   isLasts?: boolean[]; //所在的父节点树的父节点是否为最后的兄弟节点
-  // 下面为显示属性，displayData使用
   isExpand?: boolean; //是否展开
+  isShow?: boolean; //是否显示
 };
 
 type TreeDataNode = {
@@ -28,6 +28,7 @@ type TreeDataNode = {
   isLast?: boolean; //是否为最后的兄弟节点
   isLasts?: boolean[]; //所在的父节点树的父节点是否为最后的兄弟节点
   isExpand?: boolean; //是否展开
+  isShow?: boolean; //是否显示
 };
 
 type CustomIcon = {

@@ -42,6 +42,7 @@ const processingFlatData = (data: FlatDataNode[]): FlatDataNode[] => {
         pKeys: parentsKeyArray,
         isLasts: isLastsArray,
         level: (parent ? parent.level : -1) + 1,
+        isShow: false,
       };
       res.push(newItem);
       recursive(newItem, parentsKeyArray, isLastsArray);
@@ -78,6 +79,7 @@ const processingTreeData = (data: TreeDataNode[]): TreeDataNode[] => {
         isLasts,
         pKeys: parentsKey,
         pKey: parentsKey[0],
+        isShow: false,
       };
       if (hasChildren) {
         newItem.cKeys = _map(item.children, (n: TreeDataNode) => n.key);
@@ -97,25 +99,41 @@ const processingTreeData = (data: TreeDataNode[]): TreeDataNode[] => {
 };
 
 /**
- * 删除某个节点的所有子节点，收紧node时调用
- * @param parent
+ * 显示某个节点下的子节点，展开node时调用
+ *
  */
-const deleteAllChildrenByNode = (
-  tree: FlatDataNode[],
-  resTree: FlatDataNode[],
-  node: FlatDataNode
-) => {
-  const recursive = (parent: FlatDataNode) => {
-    const children = parent.cKeys;
+const changeChildrenShowByNode = (tree: FlatDataNode[], n: FlatDataNode) => {
+  const resTree = [].concat(tree);
+  const parent = _find(resTree, (i: FlatDataNode) => i.key === n.key);
+  const children = parent.cKeys;
+  parent.isExpand = true;
+  _forEach(children, (c: string) => {
+    const child = _find(resTree, (i: FlatDataNode) => i.key === c);
+    child.isShow = true;
+  });
+  return resTree;
+};
+
+/**
+ * 隐藏某个节点下的所有子节点，收紧node时调用
+ *
+ */
+const changeAllChildrenHiddenByNode = (tree: FlatDataNode[], n: FlatDataNode) => {
+  const resTree = [].concat(tree);
+  const parent = _find(resTree, (i: FlatDataNode) => i.key === n.key);
+  parent.isExpand = false;
+  const recursive = (p: FlatDataNode) => {
+    const children = p.cKeys;
     _forEach(children, (c: string) => {
-      const temp = _find(tree, (i: FlatDataNode) => i.key === c);
-      _remove(resTree, temp);
-      if (temp.isExpand) {
-        recursive(temp);
+      const child = _find(resTree, (i: FlatDataNode) => i.key === c);
+      child.isShow = false;
+      if (child.isExpand) {
+        child.isExpand = false;
+        recursive(child);
       }
     });
   };
-  recursive(node);
+  recursive(n);
   return resTree;
 };
 
@@ -138,4 +156,10 @@ const findAllCKeysByNode = (tree: FlatDataNode[], node: FlatDataNode) => {
   return resCKeys;
 };
 
-export { processingFlatData, processingTreeData, deleteAllChildrenByNode, findAllCKeysByNode };
+export {
+  processingFlatData,
+  processingTreeData,
+  changeAllChildrenHiddenByNode,
+  changeChildrenShowByNode,
+  findAllCKeysByNode,
+};

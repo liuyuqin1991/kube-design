@@ -179,5 +179,5 @@ export const ExpandLevel = () => {
     { key: '17', title: '订单管理' },
     { key: '18', title: '运维管理', pKey: '5' },
   ];
-  return <Tree flatData={data} treeTitle="青云科技" isShowLine expandLevel={1} />;
+  return <Tree flatData={data} treeTitle="青云科技" isShowLine expandLevel={2} />;
 };

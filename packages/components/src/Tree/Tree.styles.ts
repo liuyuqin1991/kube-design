@@ -8,7 +8,7 @@ interface TreeNodeStyle {
   isLasts?: boolean[];
   isExpand?: boolean;
   cKeys?: string[]; //子节点树
-  checked?: boolean;
+  selected?: boolean;
 }
 
 const IconBox = styled.div<TreeNodeStyle>`
@@ -114,8 +114,8 @@ const TreeNodeTitleBox = styled.div<TreeNodeStyle>`
   display: flex;
   align-items: center;
   color: ${({ theme }) => theme.palette.accents_8};
-  background-color: ${({ theme, checked }) =>
-    checked ? theme.palette.accents_1 : theme.palette.background};
+  background-color: ${({ theme, selected }) =>
+    selected ? theme.palette.accents_1 : theme.palette.background};
   cursor: pointer;
 `;
 
