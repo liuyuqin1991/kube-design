@@ -1,12 +1,4 @@
-import {
-  isArray as _isArray,
-  forEach as _forEach,
-  find as _find,
-  map as _map,
-  remove as _remove,
-  filter as _filter,
-  last as _last,
-} from 'lodash';
+import { isArray as _isArray, forEach as _forEach, find as _find, map as _map } from 'lodash';
 import { FlatDataNode, TreeDataNode } from './types';
 
 /**
@@ -81,6 +73,9 @@ const processingTreeData = (data: TreeDataNode[]): TreeDataNode[] => {
         pKey: parentsKey[0],
         isShow: false,
       };
+      if (item.isDisabled) {
+        newItem.isDisabled = item.isDisabled;
+      }
       if (hasChildren) {
         newItem.cKeys = _map(item.children, (n: TreeDataNode) => n.key);
       } else {

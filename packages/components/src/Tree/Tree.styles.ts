@@ -7,6 +7,7 @@ interface TreeNodeStyle {
   isLast?: boolean;
   isLasts?: boolean[];
   isExpand?: boolean;
+  isDisabled?: boolean;
   cKeys?: string[]; //子节点树
   selected?: boolean;
 }
@@ -113,10 +114,11 @@ const TreeNodeTitleBox = styled.div<TreeNodeStyle>`
   padding: 0 8px;
   display: flex;
   align-items: center;
-  color: ${({ theme }) => theme.palette.accents_8};
+  color: ${({ theme, isDisabled }) =>
+    isDisabled ? theme.palette.accents_4 : theme.palette.accents_8};
   background-color: ${({ theme, selected }) =>
     selected ? theme.palette.accents_1 : theme.palette.background};
-  cursor: pointer;
+  cursor: ${({ isDisabled }) => (isDisabled ? 'not-allowed' : 'pointer')};
 `;
 
 const TreeBox = styled.ul`
@@ -141,4 +143,19 @@ const TreeTitle = styled.li<TreeNodeStyle>`
   color: ${({ theme }) => theme.palette.accents_8};
 `;
 
-export { TreeBox, TreeTitle, IconBox, TreeNodeTitleBox, FillingLineBox, TreeNodeBox, ConnectLine };
+const CheckboxBox = styled.div`
+  display: flex;
+  align-items: center;
+  padding-left: 8px;
+`;
+
+export {
+  TreeBox,
+  TreeTitle,
+  IconBox,
+  TreeNodeTitleBox,
+  FillingLineBox,
+  TreeNodeBox,
+  ConnectLine,
+  CheckboxBox,
+};

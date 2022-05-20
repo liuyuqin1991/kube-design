@@ -1,6 +1,15 @@
 /* eslint-disable no-param-reassign */
 import React, { useState } from 'react';
-import { map as _map, forEach as _forEach, includes as _includes } from 'lodash';
+import {
+  map as _map,
+  forEach as _forEach,
+  includes as _includes,
+  every as _every,
+  some as _some,
+  find as _find,
+  remove as _remove,
+  isFunction as _isFunction,
+} from 'lodash';
 import { DefaultProps } from '../theme';
 import forwardRef from '../utils/forwardRef';
 import TreeNode from './TreeNode';
@@ -48,16 +57,20 @@ export interface TreeProps extends DefaultProps {
   /**
    * 展开指定的节点 // TODO 实现很麻烦，需求场景不明确，待开发
    */
-  expandKeys?: string[];
+  defaultExpandKeys?: string[];
   /**
    * 展开到树层级
    * @default 0
    */
-  expandLevel?: number;
+  defaultExpandLevel?: number;
   /**
    * 点击节点时触发事件
    */
-  onClick?: (selectedKeys: string[]) => void;
+  onClick?: (selectedKeys: string) => void;
+  /**
+   * 点击复选框触发事件
+   */
+  onCheck?: (selectedKeys: string) => void;
 }
 
 export const Tree = forwardRef<TreeProps, 'div'>((props: TreeProps, ref) => {
@@ -67,9 +80,9 @@ export const Tree = forwardRef<TreeProps, 'div'>((props: TreeProps, ref) => {
     isExpandAll = false,
     isMultiple = false,
     treeTitle,
-    expandKeys,
-    expandLevel = 0,
+    defaultExpandLevel = 0,
     onClick,
+    onCheck,
     ...others
   } = props;
   // 完整的树数据
@@ -82,7 +95,7 @@ export const Tree = forwardRef<TreeProps, 'div'>((props: TreeProps, ref) => {
     if (treeData) {
       resTree = processingTreeData(treeData);
     }
-    // 根据props参数设置显隐展缩
+    // 根据props参数设置显隐展缩及多选
     if (isExpandAll) {
       _forEach(resTree, (n: FlatDataNode) => {
         n.isShow = true;
@@ -92,9 +105,9 @@ export const Tree = forwardRef<TreeProps, 'div'>((props: TreeProps, ref) => {
       });
     } else {
       _forEach(resTree, (n: FlatDataNode) => {
-        if (n.level <= expandLevel) {
+        if (n.level <= defaultExpandLevel) {
           n.isShow = true;
-          if (n.level < expandLevel && n.cKeys.length > 0) {
+          if (n.level < defaultExpandLevel && n.cKeys.length > 0) {
             n.isExpand = true;
           }
         }
@@ -103,7 +116,9 @@ export const Tree = forwardRef<TreeProps, 'div'>((props: TreeProps, ref) => {
     return resTree;
   };
   const [tree, setTree] = useState<FlatDataNode[]>(initTree());
-  const [selected, setSelected] = useState<string[]>([]);
+  const [selectList, setSelectList] = useState<string>();
+  const [checkList, setCheckList] = useState<string[]>([]);
+  const [indeterminateList, setIndeterminateList] = useState<string[]>([]);
 
   const toggleNode = (n: FlatDataNode) => {
     // 收紧
@@ -118,24 +133,116 @@ export const Tree = forwardRef<TreeProps, 'div'>((props: TreeProps, ref) => {
 
   const pickNode = (f: FlatDataNode) => {
     // 单选
-    if (!isMultiple && f.key !== selected[0]) {
-      setSelected([f.key]);
+    if (!isMultiple && f.key !== selectList[0]) {
+      setSelectList(f.key);
     }
-    onClick(selected);
+    if (_isFunction(onClick)) {
+      onClick(selectList);
+    }
+  };
+
+  const checkNode = (f: FlatDataNode, c: boolean) => {
+    const checkListTemp = [].concat(checkList);
+    const indeterminateListTemp = [].concat(indeterminateList);
+    // check
+    if (c) {
+      // 无子节点
+      if (f.cKeys.length === 0) {
+        checkListTemp.push(f.key);
+      }
+      // 有子节点
+      else {
+        // 节点是不确定节点
+        if (_includes(indeterminateListTemp, f.key)) {
+          _remove(indeterminateListTemp, (x: string) => x === f.key);
+        }
+        // 递归check子节点
+        const recursive = (parent: FlatDataNode) => {
+          checkListTemp.push(parent.key);
+          _forEach(parent.cKeys, (k: string) => {
+            checkListTemp.push(k);
+            const child = _find(tree, (n: FlatDataNode) => n.key === k);
+            if (child.cKeys.length > 0) {
+              recursive(child);
+            }
+          });
+        };
+        recursive(f);
+      }
+      // 同步父节点
+      _forEach(f.pKeys, (k: string) => {
+        const temp = _find(tree, (n: FlatDataNode) => n.key === k);
+        if (_every(temp.cKeys, (ck: string) => _includes(checkListTemp, ck))) {
+          checkListTemp.push(k);
+          if (_includes(indeterminateListTemp, k)) {
+            _remove(indeterminateListTemp, (x: string) => x === k);
+          }
+        } else if (!_includes(indeterminateListTemp, k)) {
+          indeterminateListTemp.push(k);
+        }
+      });
+    }
+    // uncheck
+    else {
+      // 无子节点
+      if (f.cKeys.length === 0) {
+        _remove(checkListTemp, (x: string) => x === f.key);
+      }
+      // 有子节点，递归uncheck子节点
+      else {
+        const recursive = (parent: FlatDataNode) => {
+          _remove(checkListTemp, (x: string) => x === f.key);
+          _forEach(parent.cKeys, (k: string) => {
+            _remove(checkListTemp, (x: string) => x === k);
+            const child = _find(tree, (n: FlatDataNode) => n.key === k);
+            if (child.cKeys.length > 0) {
+              recursive(child);
+            }
+          });
+        };
+        recursive(f);
+      }
+      // 同步父节点
+      _forEach(f.pKeys, (k: string) => {
+        const temp = _find(tree, (n: FlatDataNode) => n.key === k);
+        _remove(checkListTemp, (x: string) => x === k);
+        if (
+          _some(temp.cKeys, (ck: string) => _includes(checkListTemp, ck)) &&
+          !_includes(indeterminateListTemp, k)
+        ) {
+          indeterminateListTemp.push(k);
+        }
+        if (
+          !_some(temp.cKeys, (ck: string) => _includes(checkListTemp, ck)) &&
+          !_some(temp.cKeys, (ck: string) => _includes(indeterminateListTemp, ck))
+        ) {
+          _remove(indeterminateListTemp, (x: string) => x === k);
+        }
+      });
+    }
+    setCheckList(checkListTemp);
+    setIndeterminateList(indeterminateListTemp);
+    if (_isFunction(onCheck)) {
+      onCheck(checkListTemp);
+    }
   };
 
   return (
     <TreeBox {...others} ref={ref}>
       {treeTitle && <TreeTitle>{treeTitle}</TreeTitle>}
-      {_map(tree, (t: FlatDataNode) => {
+      {_map(tree, (n: FlatDataNode) => {
         return (
           <TreeNode
-            key={t.key}
-            nodeData={t}
-            {...others}
+            key={n.key}
+            nodeData={n}
             onToggle={toggleNode}
             onPick={pickNode}
-            selected={_includes(selected, t.key)}
+            onCheck={checkNode}
+            selected={_includes(selectList, n.key)}
+            checked={_includes(checkList, n.key)}
+            indeterminate={_includes(indeterminateList, n.key)}
+            isMultiple={isMultiple}
+            {...others}
           />
         );
       })}

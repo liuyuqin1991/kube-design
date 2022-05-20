@@ -5,6 +5,7 @@ type FlatDataNode = {
   key: string;
   title: string | ReactNode;
   pKey?: string;
+  isDisabled?: boolean;
   // 以下为组件内部需要的属性
   cKeys?: string[]; //子节点树
   level?: number; //所在层级
@@ -19,6 +20,7 @@ type TreeDataNode = {
   // 参数数据中的属性
   key: string;
   title: string | ReactNode;
+  isDisabled?: boolean;
   children?: TreeDataNode[];
   // 以下为组件内部需要的属性
   cKeys?: string[]; //子节点树
