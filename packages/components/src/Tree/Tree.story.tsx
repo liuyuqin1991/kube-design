@@ -183,6 +183,9 @@ export const ExpandLevel = () => {
 };
 
 export const MultipleCheck = () => {
+  const onCheck = (selectedKeys: string[]) => {
+    window.console.log(selectedKeys.toString());
+  };
   const data = [
     { key: '16', title: '火车报销', pKey: '9' },
     { key: '1', title: '办公管理' },
@@ -203,5 +206,5 @@ export const MultipleCheck = () => {
     { key: '17', title: '订单管理', isDisabled: true },
     { key: '18', title: '运维管理', pKey: '5' },
   ];
-  return <Tree flatData={data} isMultiple isExpandAll />;
+  return <Tree flatData={data} isMultiple isExpandAll onCheck={onCheck} />;
 };

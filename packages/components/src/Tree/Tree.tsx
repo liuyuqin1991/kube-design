@@ -64,13 +64,17 @@ export interface TreeProps extends DefaultProps {
    */
   defaultExpandLevel?: number;
   /**
+   * 勾选指定的节点 // TODO 实现很麻烦，需求场景不明确，待开发
+   */
+  defaultCheckedKeys?: string[];
+  /**
    * 点击节点时触发事件
    */
   onClick?: (selectedKeys: string) => void;
   /**
    * 点击复选框触发事件
    */
-  onCheck?: (selectedKeys: string) => void;
+  onCheck?: (selectedKeys: string[]) => void;
 }
 
 export const Tree = forwardRef<TreeProps, 'div'>((props: TreeProps, ref) => {
@@ -153,14 +157,15 @@ export const Tree = forwardRef<TreeProps, 'div'>((props: TreeProps, ref) => {
       // 有子节点
       else {
         // 节点是不确定节点
-        if (_includes(indeterminateListTemp, f.key)) {
-          _remove(indeterminateListTemp, (x: string) => x === f.key);
-        }
+        _remove(indeterminateListTemp, (x: string) => x === f.key);
+        checkListTemp.push(f.key);
         // 递归check子节点
         const recursive = (parent: FlatDataNode) => {
-          checkListTemp.push(parent.key);
           _forEach(parent.cKeys, (k: string) => {
-            checkListTemp.push(k);
+            if (!_includes(checkListTemp, k)) {
+              _remove(indeterminateListTemp, (x: string) => x === k);
+              checkListTemp.push(k);
+            }
             const child = _find(tree, (n: FlatDataNode) => n.key === k);
             if (child.cKeys.length > 0) {
               recursive(child);
@@ -174,9 +179,7 @@ export const Tree = forwardRef<TreeProps, 'div'>((props: TreeProps, ref) => {
         const temp = _find(tree, (n: FlatDataNode) => n.key === k);
         if (_every(temp.cKeys, (ck: string) => _includes(checkListTemp, ck))) {
           checkListTemp.push(k);
-          if (_includes(indeterminateListTemp, k)) {
-            _remove(indeterminateListTemp, (x: string) => x === k);
-          }
+          _remove(indeterminateListTemp, (x: string) => x === k);
         } else if (!_includes(indeterminateListTemp, k)) {
           indeterminateListTemp.push(k);
         }
