@@ -48,7 +48,7 @@ export interface TreeProps extends DefaultProps {
   /**
    * 自定义渲染展开/收紧Icon Function
    */
-  customIcon?: () => CustomIcon;
+  customIconFn?: () => CustomIcon;
   /**
    * 是否多选
    * @default false
@@ -70,7 +70,7 @@ export interface TreeProps extends DefaultProps {
   /**
    * 点击节点时触发事件
    */
-  onClick?: (selectedKeys: string) => void;
+  onSelect?: (selectedKeys: string) => void;
   /**
    * 点击复选框触发事件
    */
@@ -85,7 +85,7 @@ export const Tree = forwardRef<TreeProps, 'div'>((props: TreeProps, ref) => {
     isMultiple = false,
     treeTitle,
     defaultExpandLevel = 0,
-    onClick,
+    onSelect,
     onCheck,
     ...others
   } = props;
@@ -120,7 +120,9 @@ export const Tree = forwardRef<TreeProps, 'div'>((props: TreeProps, ref) => {
     return resTree;
   };
   const [tree, setTree] = useState<FlatDataNode[]>(initTree());
-  const [selectList, setSelectList] = useState<string>();
+  // pick相关
+  const [selected, setSelected] = useState<string>();
+  // 多选复选框相关
   const [checkList, setCheckList] = useState<string[]>([]);
   const [indeterminateList, setIndeterminateList] = useState<string[]>([]);
 
@@ -136,12 +138,9 @@ export const Tree = forwardRef<TreeProps, 'div'>((props: TreeProps, ref) => {
   };
 
   const pickNode = (f: FlatDataNode) => {
-    // 单选
-    if (!isMultiple && f.key !== selectList[0]) {
-      setSelectList(f.key);
-    }
-    if (_isFunction(onClick)) {
-      onClick(selectList);
+    setSelected(f.key);
+    if (_isFunction(onSelect)) {
+      onSelect(selected);
     }
   };
 
@@ -241,10 +240,11 @@ export const Tree = forwardRef<TreeProps, 'div'>((props: TreeProps, ref) => {
             onToggle={toggleNode}
             onPick={pickNode}
             onCheck={checkNode}
-            selected={_includes(selectList, n.key)}
-            checked={_includes(checkList, n.key)}
-            indeterminate={_includes(indeterminateList, n.key)}
+            isSelected={selected === n.key}
+            isChecked={_includes(checkList, n.key)}
+            isIndeterminate={_includes(indeterminateList, n.key)}
             isMultiple={isMultiple}
+            haveChildren={n.cKeys.length > 0}
             {...others}
           />
         );

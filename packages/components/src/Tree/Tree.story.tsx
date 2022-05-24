@@ -9,6 +9,9 @@ export default {
 };
 
 export const FlatData = () => {
+  const onSelect = (selectedKey: string) => {
+    window.console.log(selectedKey);
+  };
   const data = [
     { key: '16', title: '火车报销', pKey: '9' },
     { key: '1', title: '办公管理' },
@@ -29,7 +32,7 @@ export const FlatData = () => {
     { key: '17', title: '订单管理' },
     { key: '18', title: '运维管理', pKey: '5' },
   ];
-  return <Tree flatData={data} isExpandAll treeTitle="青云科技" isShowLine />;
+  return <Tree flatData={data} isExpandAll treeTitle="青云科技" isShowLine onSelect={onSelect} />;
 };
 
 export const TreeData = () => {
@@ -171,6 +174,9 @@ export const ExpandLevel = () => {
     { key: '15', title: '在哪里结束', pKey: '12' },
     { key: '4', title: '请假记录', pKey: '2' },
     { key: '10', title: '后勤管理', pKey: '7' },
+    { key: '19', title: '扫地', pKey: '10' },
+    { key: '20', title: '拖地', pKey: '10' },
+    { key: '21', title: '行政管理', pKey: '7' },
     { key: '5', title: '系统设置' },
     { key: '6', title: '权限管理', pKey: '5' },
     { key: '7', title: '用户角色', pKey: '6' },

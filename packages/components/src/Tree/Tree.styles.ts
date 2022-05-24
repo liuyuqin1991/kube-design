@@ -8,7 +8,7 @@ interface TreeNodeStyle {
   isLasts?: boolean[];
   isExpand?: boolean;
   isDisabled?: boolean;
-  cKeys?: string[]; //子节点树
+  haveChildren?: boolean;
   selected?: boolean;
 }
 
@@ -76,7 +76,7 @@ const modifyLineCss = (level, isLast, theme) => {
         position: absolute;
         top: 16px;
         right: 16px;
-        width: 1px;
+        width: 2px;
         height: 16px;
         background-color: ${whiteColor};
       }
@@ -146,7 +146,7 @@ const TreeTitle = styled.li<TreeNodeStyle>`
 const CheckboxBox = styled.div`
   display: flex;
   align-items: center;
-  padding-left: 8px;
+  padding: 0 5px 0 8px;
 `;
 
 export {
