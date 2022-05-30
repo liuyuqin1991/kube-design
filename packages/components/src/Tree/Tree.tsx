@@ -17,6 +17,7 @@ import { FlatDataNode, TreeDataNode, CustomIcon } from './types';
 import {
   processingFlatData,
   processingTreeData,
+  processingLazyLoadData,
   changeChildrenShowByNode,
   changeAllChildrenHiddenByNode,
 } from './util';
@@ -75,6 +76,10 @@ export interface TreeProps extends DefaultProps {
    * 点击复选框触发事件
    */
   onCheck?: (selectedKeys: string[]) => void;
+  /**
+   * 懒加载子节点，必须节点上isLazy为true才能触发
+   */
+  onLoad?: (selectedKeys: string) => Promise<FlatDataNode[]>;
 }
 
 export const Tree = forwardRef<TreeProps, 'div'>((props: TreeProps, ref) => {
@@ -87,6 +92,7 @@ export const Tree = forwardRef<TreeProps, 'div'>((props: TreeProps, ref) => {
     defaultExpandLevel = 0,
     onSelect,
     onCheck,
+    onLoad,
     ...others
   } = props;
   // 完整的树数据
@@ -102,18 +108,18 @@ export const Tree = forwardRef<TreeProps, 'div'>((props: TreeProps, ref) => {
     // 根据props参数设置显隐展缩及多选
     if (isExpandAll) {
       _forEach(resTree, (n: FlatDataNode) => {
-        n.isShow = true;
-        if (n.cKeys.length > 0) {
+        if (n.cKeys.length > 0 && !n.isLazy) {
           n.isExpand = true;
         }
       });
     } else {
       _forEach(resTree, (n: FlatDataNode) => {
         if (n.level <= defaultExpandLevel) {
-          n.isShow = true;
-          if (n.level < defaultExpandLevel && n.cKeys.length > 0) {
+          if (n.level < defaultExpandLevel && n.cKeys.length > 0 && !n.isLazy) {
             n.isExpand = true;
           }
+        } else {
+          n.isShow = false;
         }
       });
     }
@@ -121,30 +127,30 @@ export const Tree = forwardRef<TreeProps, 'div'>((props: TreeProps, ref) => {
   };
   const [tree, setTree] = useState<FlatDataNode[]>(initTree());
   // pick相关
-  const [selected, setSelected] = useState<string>();
+  const [selectNodeKey, setSelectNodeKey] = useState<string>();
   // 多选复选框相关
   const [checkList, setCheckList] = useState<string[]>([]);
   const [indeterminateList, setIndeterminateList] = useState<string[]>([]);
 
-  const toggleNode = (n: FlatDataNode) => {
+  const toggle = (f: FlatDataNode) => {
     // 收紧
-    if (n.isExpand) {
-      setTree(changeAllChildrenHiddenByNode(tree, n));
+    if (f.isExpand) {
+      setTree(changeAllChildrenHiddenByNode(tree, f));
     }
     // 展开
     else {
-      setTree(changeChildrenShowByNode(tree, n));
+      setTree(changeChildrenShowByNode(tree, f));
     }
   };
 
-  const pickNode = (f: FlatDataNode) => {
-    setSelected(f.key);
+  const select = (f: FlatDataNode) => {
+    setSelectNodeKey(f.key);
     if (_isFunction(onSelect)) {
-      onSelect(selected);
+      onSelect(selectNodeKey);
     }
   };
 
-  const checkNode = (f: FlatDataNode, c: boolean) => {
+  const check = (f: FlatDataNode, c: boolean) => {
     const checkListTemp = [].concat(checkList);
     const indeterminateListTemp = [].concat(indeterminateList);
     // check
@@ -229,6 +235,20 @@ export const Tree = forwardRef<TreeProps, 'div'>((props: TreeProps, ref) => {
     }
   };
 
+  const load = async (f: FlatDataNode): Promise<void> => {
+    if (_isFunction(onLoad) && f.cKeys.length === 0) {
+      await onLoad(f.key)
+        .then((data: FlatDataNode[]) => {
+          if (data && data.length > 0) {
+            setTree(processingLazyLoadData(data, tree, f, !!flatData));
+          }
+        })
+        .finally(() => {
+          return new Promise((resolve) => resolve());
+        });
+    }
+  };
+
   return (
     <TreeBox {...others} ref={ref}>
       {treeTitle && <TreeTitle>{treeTitle}</TreeTitle>}
@@ -237,10 +257,11 @@ export const Tree = forwardRef<TreeProps, 'div'>((props: TreeProps, ref) => {
           <TreeNode
             key={n.key}
             nodeData={n}
-            onToggle={toggleNode}
-            onPick={pickNode}
-            onCheck={checkNode}
-            isSelected={selected === n.key}
+            onToggle={toggle}
+            onSelect={select}
+            onCheck={check}
+            onLoad={load}
+            isSelected={selectNodeKey === n.key}
             isChecked={_includes(checkList, n.key)}
             isIndeterminate={_includes(indeterminateList, n.key)}
             isMultiple={isMultiple}

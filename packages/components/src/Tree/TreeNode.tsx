@@ -1,7 +1,7 @@
-import React, { useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { TriangleRight, TriangleDown } from '@kubed/icons';
 import { isFunction as _isFunction } from 'lodash';
-import { Checkbox } from '../index';
+import { Checkbox, Loading } from '../index';
 import { FlatDataNode, CustomIcon } from './types';
 import { DefaultProps } from '../theme';
 import {
@@ -27,8 +27,9 @@ export interface TreeNodeProps extends DefaultProps {
   // 是否有子节点
   haveChildren: boolean;
   onToggle?: (fn: FlatDataNode) => void;
-  onPick?: (fn: FlatDataNode) => void;
+  onSelect?: (fn: FlatDataNode) => void;
   onCheck?: (fn: FlatDataNode, c: boolean) => void;
+  onLoad?: (fn: FlatDataNode) => Promise<void>;
   customIconFn?: () => CustomIcon;
 }
 
@@ -43,22 +44,42 @@ const TreeNode = forwardRef<TreeNodeProps, 'div'>(
       haveChildren,
       isIndeterminate,
       onToggle,
-      onPick,
+      onSelect,
       onCheck,
+      onLoad,
       customIconFn,
       ...others
     },
     ref
   ) => {
-    const { key, title, isExpand, level, isLast, isLasts, isShow, isDisabled } = nodeData;
+    const { key, title, isExpand, level, isLast, isLasts, isShow, isDisabled, isLazy } = nodeData;
+    // load相关
+    const [isLoading, setIsLoading] = useState<boolean>(false);
 
-    const toggleNode = () => {
-      onToggle(nodeData);
+    const load = async () => {
+      await onLoad(nodeData).finally(() => {
+        setIsLoading(false);
+      });
     };
 
-    const pickNode = () => {
+    useEffect(() => {
+      if (isLoading) {
+        load();
+      }
+    }, [isLoading]);
+
+    const toggle = () => {
+      // lazy load
+      if (isLazy) {
+        setIsLoading(true);
+      } else {
+        onToggle(nodeData);
+      }
+    };
+
+    const select = () => {
       if (isDisabled) return;
-      onPick(nodeData);
+      onSelect(nodeData);
     };
 
     const checkNode = () => {
@@ -67,12 +88,18 @@ const TreeNode = forwardRef<TreeNodeProps, 'div'>(
     };
 
     const renderIcon = useMemo(() => {
+      // loading
+      if (isLoading) {
+        return <Loading size={14} />;
+      }
+      // custom icon
       if (_isFunction(customIconFn)) {
         const iconNodes = customIconFn();
         return isExpand ? iconNodes.open : iconNodes.close;
       }
+      // default
       return isExpand ? <TriangleDown size={14} /> : <TriangleRight size={14} />;
-    }, [nodeData.isExpand]);
+    }, [isExpand, isLoading]);
 
     return (
       isShow && (
@@ -82,7 +109,7 @@ const TreeNode = forwardRef<TreeNodeProps, 'div'>(
           ) : (
             <FillingLineBox level={level} />
           )}
-          {haveChildren && <IconBox onClick={toggleNode}>{renderIcon}</IconBox>}
+          {(haveChildren || isLazy) && <IconBox onClick={toggle}>{renderIcon}</IconBox>}
           {isMultiple && (
             <CheckboxBox>
               <Checkbox
@@ -96,8 +123,9 @@ const TreeNode = forwardRef<TreeNodeProps, 'div'>(
           <TreeNodeTitleBox
             selected={isSelected}
             isDisabled={isDisabled}
-            onClick={pickNode}
+            onClick={select}
             data-key={key}
+            data-level={level}
           >
             {title}
           </TreeNodeTitleBox>

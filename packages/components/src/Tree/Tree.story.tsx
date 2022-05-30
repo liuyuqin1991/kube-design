@@ -2,6 +2,7 @@ import * as React from 'react';
 import { ChevronRight, ChevronDown } from '@kubed/icons';
 // import { storiesOf } from '@storybook/react';
 import { Tree } from './Tree';
+import { FlatDataNode } from './types';
 
 export default {
   title: 'Components/Tree',
@@ -213,4 +214,131 @@ export const MultipleCheck = () => {
     { key: '18', title: '运维管理', pKey: '5' },
   ];
   return <Tree flatData={data} isMultiple isExpandAll onCheck={onCheck} />;
+};
+
+export const LazyLoadFlatData = () => {
+  const load = async (selectedKey: string) => {
+    const lazyLoadData = new Promise<FlatDataNode[]>((resolve) => {
+      let data = [];
+      setTimeout(() => {
+        data = [
+          { key: '19', title: '全部订单', pKey: selectedKey },
+          { key: '20', title: '已付款', pKey: selectedKey },
+          { key: '21', title: '一周内订单', pKey: '19' },
+        ];
+        resolve(data);
+      }, 1500);
+    });
+    return lazyLoadData;
+  };
+  const data = [
+    { key: '16', title: '火车报销', pKey: '9' },
+    { key: '1', title: '办公管理' },
+    { key: '2', title: '请假申请', pKey: '1' },
+    { key: '13', title: '厨师管理', pKey: '7' },
+    { key: '3', title: '出差申请', pKey: '1' },
+    { key: '11', title: '开始', pKey: '8' },
+    { key: '12', title: '结束', pKey: '8', isDisabled: true },
+    { key: '14', title: '什么时候结束', pKey: '12' },
+    { key: '15', title: '在哪里结束', pKey: '12' },
+    { key: '4', title: '请假记录', pKey: '2' },
+    { key: '10', title: '后勤管理', pKey: '7', isDisabled: true },
+    { key: '5', title: '系统设置' },
+    { key: '6', title: '权限管理', pKey: '5' },
+    { key: '7', title: '用户角色', pKey: '6' },
+    { key: '8', title: '菜单设置', pKey: '6' },
+    { key: '9', title: '报销管理' },
+    { key: '17', title: '订单管理（异步加载）', isLazy: true },
+    { key: '18', title: '运维管理', pKey: '5' },
+  ];
+  return <Tree flatData={data} treeTitle="青云科技" isShowLine onLoad={load} />;
+};
+
+export const LazyLoadTreeData = () => {
+  const load = async (key: string) => {
+    const lazyLoadData = new Promise<FlatDataNode[]>((resolve) => {
+      let data = [];
+      setTimeout(() => {
+        data = [
+          {
+            key: String(Number(key) + 1),
+            title: '全部订单',
+            children: [{ key: String(Number(key) + 2), title: '一周内订单' }],
+          },
+          { key: String(Number(key) + 3), title: '未付款' },
+          { key: String(Number(key) + 4), title: '已付款（异步加载）', isLazy: true },
+        ];
+        resolve(data);
+      }, 1500);
+    });
+    return lazyLoadData;
+  };
+  const data = [
+    {
+      key: '1',
+      title: '办公管理',
+      children: [
+        {
+          key: '2',
+          title: '请假申请',
+          children: [
+            {
+              key: '4',
+              title: '请假记录',
+            },
+          ],
+        },
+        {
+          key: '3',
+          title: '出差申请',
+        },
+      ],
+    },
+    {
+      key: '5',
+      title: '系统设置',
+      children: [
+        {
+          key: '6',
+          title: '权限管理',
+          children: [
+            {
+              key: '7',
+              title: '用户角色',
+              children: [
+                { key: '13', title: '厨师管理' },
+                { key: '10', title: '后勤管理' },
+              ],
+            },
+            {
+              key: '8',
+              title: '菜单设置',
+              children: [
+                { key: '11', title: '开始' },
+                {
+                  key: '12',
+                  title: '结束',
+                  children: [
+                    { key: '14', title: '什么时候结束' },
+                    { key: '15', title: '在哪里结束' },
+                  ],
+                },
+              ],
+            },
+          ],
+        },
+      ],
+    },
+    {
+      key: '9',
+      title: '报销管理',
+      children: [{ key: '16', title: '火车报销' }],
+    },
+    {
+      key: '17',
+      title: '订单管理（异步加载）',
+      isLazy: true,
+    },
+  ];
+  return <Tree treeData={data} treeTitle="青云科技" isShowLine onLoad={load} />;
 };
