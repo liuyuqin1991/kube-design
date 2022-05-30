@@ -107,19 +107,19 @@ export const Tree = forwardRef<TreeProps, 'div'>((props: TreeProps, ref) => {
     }
     // 根据props参数设置显隐展缩及多选
     if (isExpandAll) {
-      _forEach(resTree, (n: FlatDataNode) => {
-        if (n.cKeys.length > 0 && !n.isLazy) {
-          n.isExpand = true;
+      _forEach(resTree, (f: FlatDataNode) => {
+        if (f.cKeys.length > 0 && !f.isLazy) {
+          f.isExpand = true;
         }
       });
     } else {
-      _forEach(resTree, (n: FlatDataNode) => {
-        if (n.level <= defaultExpandLevel) {
-          if (n.level < defaultExpandLevel && n.cKeys.length > 0 && !n.isLazy) {
-            n.isExpand = true;
+      _forEach(resTree, (f: FlatDataNode) => {
+        if (f.level <= defaultExpandLevel) {
+          if (f.level < defaultExpandLevel && f.cKeys.length > 0 && !f.isLazy) {
+            f.isExpand = true;
           }
         } else {
-          n.isShow = false;
+          f.isShow = false;
         }
       });
     }
@@ -252,20 +252,20 @@ export const Tree = forwardRef<TreeProps, 'div'>((props: TreeProps, ref) => {
   return (
     <TreeBox {...others} ref={ref}>
       {treeTitle && <TreeTitle>{treeTitle}</TreeTitle>}
-      {_map(tree, (n: FlatDataNode) => {
+      {_map(tree, (f: FlatDataNode) => {
         return (
           <TreeNode
-            key={n.key}
-            nodeData={n}
+            key={f.key}
+            nodeData={f}
             onToggle={toggle}
             onSelect={select}
             onCheck={check}
             onLoad={load}
-            isSelected={selectNodeKey === n.key}
-            isChecked={_includes(checkList, n.key)}
-            isIndeterminate={_includes(indeterminateList, n.key)}
+            isSelected={selectNodeKey === f.key}
+            isChecked={_includes(checkList, f.key)}
+            isIndeterminate={_includes(indeterminateList, f.key)}
             isMultiple={isMultiple}
-            haveChildren={n.cKeys.length > 0}
+            haveChildren={f.cKeys.length > 0}
             {...others}
           />
         );

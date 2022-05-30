@@ -11,7 +11,7 @@ import { FlatDataNode, TreeDataNode } from './types';
  * 预处理传入的扁平化数据，扁平化，按树的数据结构排序并增加一些节点属性
  * @param data
  */
-const processingFlatData = (data: FlatDataNode[], node?: FlatDataNode): FlatDataNode[] => {
+const processingFlatData = (data: FlatDataNode[], f?: FlatDataNode): FlatDataNode[] => {
   if (!_isArray(data) || data.length === 0) return [];
   const res = [];
   const recursive = (parent = undefined, parentsKey = [], isLasts = []) => {
@@ -46,8 +46,8 @@ const processingFlatData = (data: FlatDataNode[], node?: FlatDataNode): FlatData
       recursive(newItem, parentsKeyArray, isLastsArray);
     });
   };
-  if (node) {
-    recursive(node, node.pKeys, node.isLasts);
+  if (f) {
+    recursive(f, f.pKeys, f.isLasts);
   } else recursive();
   return res;
 };
@@ -56,7 +56,7 @@ const processingFlatData = (data: FlatDataNode[], node?: FlatDataNode): FlatData
  * 预处理传入的树形化数据，扁平化，按树的数据结构排序并增加一些节点属性
  * @param data
  */
-const processingTreeData = (data: TreeDataNode[], node?: FlatDataNode): TreeDataNode[] => {
+const processingTreeData = (data: TreeDataNode[], f?: FlatDataNode): TreeDataNode[] => {
   if (!_isArray(data) || data.length === 0) return [];
   const res = [];
   const recursive = (
@@ -93,8 +93,8 @@ const processingTreeData = (data: TreeDataNode[], node?: FlatDataNode): TreeData
       }
     });
   };
-  if (node) {
-    recursive(data, node, node.pKeys, node.isLasts);
+  if (f) {
+    recursive(data, f, f.pKeys, f.isLasts);
   } else recursive(data);
   return res;
 };
@@ -106,16 +106,16 @@ const processingTreeData = (data: TreeDataNode[], node?: FlatDataNode): TreeData
 const processingLazyLoadData = (
   loadData: FlatDataNode[],
   tree: FlatDataNode[],
-  node: FlatDataNode,
+  f: FlatDataNode,
   isFlat: boolean
 ): FlatDataNode[] => {
   let resLoadData = [];
   const cKeys = [];
   const resTree = [].concat(tree);
   if (isFlat) {
-    resLoadData = processingFlatData(loadData, node);
-  } else resLoadData = processingTreeData(loadData, node);
-  const index = _findIndex(resTree, node);
+    resLoadData = processingFlatData(loadData, f);
+  } else resLoadData = processingTreeData(loadData, f);
+  const index = _findIndex(resTree, f);
   const nodeTemp = resTree[index];
   nodeTemp.isExpand = true;
   _forEach(resLoadData, (n: FlatDataNode, i: number) => {
@@ -136,9 +136,9 @@ const processingLazyLoadData = (
  * 显示某个节点下的子节点，展开node时调用
  *
  */
-const changeChildrenShowByNode = (tree: FlatDataNode[], n: FlatDataNode) => {
+const changeChildrenShowByNode = (tree: FlatDataNode[], f: FlatDataNode) => {
   const resTree = [].concat(tree);
-  const parent = _find(resTree, (i: FlatDataNode) => i.key === n.key);
+  const parent = _find(resTree, (i: FlatDataNode) => i.key === f.key);
   const children = parent.cKeys;
   parent.isExpand = true;
   _forEach(children, (c: string) => {
@@ -152,9 +152,9 @@ const changeChildrenShowByNode = (tree: FlatDataNode[], n: FlatDataNode) => {
  * 隐藏某个节点下的所有子节点，收紧node时调用
  *
  */
-const changeAllChildrenHiddenByNode = (tree: FlatDataNode[], n: FlatDataNode) => {
+const changeAllChildrenHiddenByNode = (tree: FlatDataNode[], f: FlatDataNode) => {
   const resTree = [].concat(tree);
-  const parent = _find(resTree, (i: FlatDataNode) => i.key === n.key);
+  const parent = _find(resTree, (i: FlatDataNode) => i.key === f.key);
   parent.isExpand = false;
   const recursive = (p: FlatDataNode) => {
     const children = p.cKeys;
@@ -167,16 +167,16 @@ const changeAllChildrenHiddenByNode = (tree: FlatDataNode[], n: FlatDataNode) =>
       }
     });
   };
-  recursive(n);
+  recursive(f);
   return resTree;
 };
 
 /**
  * 找到某个节点的所有子节点key，返回这个key数组
  */
-const findAllCKeysByNode = (tree: FlatDataNode[], node: FlatDataNode) => {
+const findAllCKeysByNode = (tree: FlatDataNode[], f: FlatDataNode) => {
   const resCKeys = [];
-  const { cKeys } = node;
+  const { cKeys } = f;
   const recursive = (parentKeys: string[]) => {
     if (parentKeys && parentKeys.length > 0) {
       _forEach(parentKeys, (key: string) => {

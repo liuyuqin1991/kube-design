@@ -1,6 +1,5 @@
 import * as React from 'react';
 import { ChevronRight, ChevronDown } from '@kubed/icons';
-// import { storiesOf } from '@storybook/react';
 import { Tree } from './Tree';
 import { FlatDataNode } from './types';
 
